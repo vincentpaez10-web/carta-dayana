@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Dayana ✨</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #1f0814 0%, #3b0a23 40%, #260517 70%, #12030b 100%);
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .font-cursive {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .font-serif-custom {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Background Canvas */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 3D Envelope Container */
+        .envelope-wrapper {
+            perspective: 1000px;
+        }
+
+        .envelope {
+            position: relative;
+            width: 310px;
+            height: 210px;
+            background: linear-gradient(145deg, #be185d, #9d174d);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 35px rgba(244, 114, 182, 0.25);
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .envelope:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        /* Envelope Flap (Top) */
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 155px solid transparent;
+            border-right: 155px solid transparent;
+            border-top: 125px solid #db2777;
+            transform-origin: top;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.2s ease 0.4s;
+            z-index: 5;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Envelope Pocket (Front bottom triangle) */
+        .pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 155px solid #831843;
+            border-right: 155px solid #831843;
+            border-bottom: 115px solid #9d174d;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 4;
+        }
+
+        /* Heart Seal with Golden Accents */
+        .heart-seal {
+            position: absolute;
+            top: 98px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #701a75;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+            z-index: 6;
+            transition: transform 0.5s ease, opacity 0.4s ease;
+        }
+
+        .envelope.open .flap {
+            transform: rotateX(180deg);
+            z-index: 2;
+        }
+
+        .envelope.open .heart-seal {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+        }
+
+        /* Letter Inside Preview */
+        .letter-preview {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            width: 280px;
+            height: 190px;
+            background: #fffdfa;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .envelope.open .letter-preview {
+            transform: translateY(-135px) scale(1.05);
+        }
+
+        /* Modal / Full Letter View */
+        .full-letter-modal {
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        /* Paragraph Fade-In Animations */
+        .paragraph-hidden {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .paragraph-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(244, 114, 182, 0.4);
+            border-radius: 10px;
+        }
+
+        /* Soft Pulse Glow */
+        @keyframes softGlow {
+            0%, 100% { box-shadow: 0 0 25px rgba(244, 114, 182, 0.25), 0 0 50px rgba(234, 179, 8, 0.15); }
+            50% { box-shadow: 0 0 40px rgba(244, 114, 182, 0.45), 0 0 65px rgba(234, 179, 8, 0.3); }
+        }
+
+        .glow-box {
+            animation: softGlow 5s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between items-center relative px-4 py-8">
+
+    <!-- Canvas para corazones, destellos dorados y luciérnagas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Header / Barra Superior -->
+    <header class="w-full max-w-md flex justify-between items-center z-10 mb-4">
+        <div class="flex items-center space-x-2">
+            <span class="text-[11px] uppercase tracking-widest text-pink-300/80 font-semibold flex items-center gap-1.5">
+                <i class="fas fa-sparkles text-amber-300"></i> Una nota especial
+            </span>
+        </div>
+        <!-- Botón de Música Ambient -->
+        <button id="musicBtn" onclick="toggleAudio()" class="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-pink-200 px-3.5 py-1.5 rounded-full backdrop-blur-md border border-white/15 transition-all text-xs font-medium active:scale-95 shadow-lg">
+            <i id="musicIcon" class="fas fa-music text-pink-400"></i>
+            <span id="musicText">Música</span>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center z-10 my-4">
+
+        <!-- Indicador de instrucción inicial -->
+        <div id="instructionHint" class="text-center mb-8 animate-bounce transition-opacity duration-500">
+            <p class="text-pink-200/90 text-sm font-medium tracking-wide bg-white/5 py-2 px-4 rounded-full border border-pink-500/20 backdrop-blur-md shadow-md">
+                <i class="fas fa-hand-pointer mr-2 text-amber-300"></i> Toca el sobre para abrir ✨
+            </p>
+        </div>
+
+        <!-- Contenedor del Sobre 3D -->
+        <div class="envelope-wrapper flex justify-center items-center">
+            <div id="envelope" class="envelope" onclick="openEnvelope()">
+                <!-- Solapa -->
+                <div class="flap"></div>
+                
+                <!-- Sello de corazón dorado -->
+                <div class="heart-seal">
+                    <i class="fas fa-heart text-xl"></i>
+                </div>
+                
+                <!-- Vista previa de la carta interior -->
+                <div class="letter-preview text-center">
+                    <i class="fas fa-heart text-pink-500 text-3xl mb-2 animate-pulse"></i>
+                    <p class="font-cursive text-3xl text-slate-800">Para Dayana</p>
+                    <p class="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Toca para leer</p>
+                </div>
+                
+                <!-- Bolsillo del sobre -->
+                <div class="pocket"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Carta Desplegada Completa -->
+    <div id="letterModal" class="full-letter-modal fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
+        <!-- Overlay oscuro -->
+        <div class="absolute inset-0 bg-black/75 backdrop-blur-md" onclick="closeEnvelope()"></div>
+
+        <!-- Tarjeta de la Carta -->
+        <div class="glow-box bg-gradient-to-b from-slate-900/95 via-purple-950/90 to-slate-950/95 border border-pink-500/30 rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col z-10 shadow-2xl overflow-hidden transform scale-95 transition-all duration-500" id="modalCard">
+            
+            <!-- Barra Superior del Modal -->
+            <div class="px-6 pt-5 pb-3 border-b border-pink-500/15 flex justify-between items-center bg-white/5">
+                <span class="text-xs font-semibold tracking-widest text-amber-300 uppercase flex items-center gap-2">
+                    <i class="fas fa-envelope-open-text text-pink-400"></i> Para ti, Dayana
+                </span>
+                <button onclick="closeEnvelope()" class="text-slate-400 hover:text-white transition-colors p-1 text-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Cuerpo del Mensaje (Scrollable y animado por párrafos) -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 text-slate-200" id="letterBody">
+                
+                <!-- TEXTO EXACTO DE LA CARTA -->
+                <div class="space-y-4 font-serif-custom text-base leading-relaxed text-slate-200 pt-2">
+                    <p class="paragraph-hidden font-medium text-lg text-pink-200" id="p0">
+                        Dayana, eres aquella persona que alegra mis jueves. Me alegra saber que puedo verte, aunque sea un día a la semana.
+                    </p>
+                    
+                    <p class="paragraph-hidden" id="p1">
+                        Tienes una voz con un tono relajante que me transmite tranquilidad y un poquito de sueño.
+                    </p>
+                    
+                    <p class="paragraph-hidden" id="p2">
+                        Tu manera de sonreír hace que me olvide del tiempo y hasta del pasaje.
+                    </p>
+                    
+                    <p class="paragraph-hidden" id="p3">
+                        Tu mirada me transmite tranquilidad y ternura, cualidades que me parecen muy bonitas.
+                    </p>
+                    
+                    <p class="paragraph-hidden" id="p4">
+                        Además, admiro a las personas que se esfuerzan por construir un mañana mejor.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Footer con Botón de Cierre -->
+            <div class="p-4 bg-slate-950/90 border-t border-pink-500/15 text-center">
+                <button onclick="closeEnvelope()" class="w-full py-3 bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:opacity-95 text-white font-semibold rounded-2xl text-sm shadow-lg shadow-pink-500/25 transition-all active:scale-95">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer Discreto -->
+    <footer class="w-full max-w-md text-center z-10 text-[11px] text-pink-300/40 mt-4 font-medium tracking-wide">
+        Creado especialmente para Dayana ✨
+    </footer>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        /* -------------------------------------------------------------
+           1. CANVAS ANIMADO (Corazones, Luciérnagas y Destellos Dorados)
+        ------------------------------------------------------------- */
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        const particleCount = 45;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 60;
+                this.size = Math.random() * 10 + 4;
+                this.speedY = Math.random() * 1.0 + 0.3;
+                this.speedX = Math.random() * 0.6 - 0.3;
+                this.opacity = Math.random() * 0.7 + 0.2;
+                
+                const rand = Math.random();
+                if (rand > 0.55) {
+                    this.type = 'heart';
+                    this.color = `hsla(${Math.random() * 30 + 330}, 85%, 75%, ${this.opacity})`;
+                } else if (rand > 0.25) {
+                    this.type = 'goldGlow';
+                    this.color = `hsla(${Math.random() * 20 + 40}, 90%, 70%, ${this.opacity})`;
+                } else {
+                    this.type = 'firefly';
+                    this.color = `hsla(50, 100%, 75%, ${this.opacity})`;
+                }
+
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.02;
+                this.pulse = Math.random() * Math.PI;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX + Math.sin(this.y * 0.015) * 0.4;
+                this.rotation += this.rotSpeed;
+                this.pulse += 0.03;
+
+                if (this.y < -30) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+
+                if (this.type === 'heart') {
+                    ctx.beginPath();
+                    const topCurveHeight = this.size * 0.3;
+                    ctx.moveTo(0, topCurveHeight);
+                    ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+                    ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+                    ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type === 'goldGlow') {
+                    ctx.beginPath();
+                    for (let i = 0; i < 4; i++) {
+                        ctx.lineTo(Math.cos((i * Math.PI) / 2) * this.size, Math.sin((i * Math.PI) / 2) * this.size);
+                        ctx.lineTo(Math.cos((i * Math.PI) / 2 + Math.PI / 4) * (this.size / 3), Math.sin((i * Math.PI) / 2 + Math.PI / 4) * (this.size / 3));
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    const currentRadius = (this.size / 3) + Math.sin(this.pulse) * 1.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.max(1, currentRadius), 0, Math.PI * 2);
+                    ctx.shadowColor = '#fef08a';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+
+        /* -------------------------------------------------------------
+           2. REVELADO PROGRESIVO Y APERTURA DE CARTA
+        ------------------------------------------------------------- */
+        let isOpen = false;
+
+        function openEnvelope() {
+            if (isOpen) return;
+            isOpen = true;
+
+            const envelope = document.getElementById('envelope');
+            const hint = document.getElementById('instructionHint');
+            const modal = document.getElementById('letterModal');
+            const modalCard = document.getElementById('modalCard');
+
+            envelope.classList.add('open');
+            hint.style.opacity = '0';
+
+            startAudio();
+
+            setTimeout(() => {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modalCard.classList.remove('scale-95');
+                modalCard.classList.add('scale-100');
+
+                const totalParagraphs = 5;
+                for (let i = 0; i < totalParagraphs; i++) {
+                    setTimeout(() => {
+                        const el = document.getElementById(`p${i}`);
+                        if (el) {
+                            el.classList.remove('paragraph-hidden');
+                            el.classList.add('paragraph-visible');
+                        }
+                    }, 300 + (i * 450));
+                }
+            }, 850);
+        }
+
+        function closeEnvelope() {
+            const modal = document.getElementById('letterModal');
+            const modalCard = document.getElementById('modalCard');
+            const envelope = document.getElementById('envelope');
+            const hint = document.getElementById('instructionHint');
+
+            modalCard.classList.remove('scale-100');
+            modalCard.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+
+            setTimeout(() => {
+                envelope.classList.remove('open');
+                hint.style.opacity = '1';
+                isOpen = false;
+
+                for (let i = 0; i < 5; i++) {
+                    const el = document.getElementById(`p${i}`);
+                    if (el) {
+                        el.classList.remove('paragraph-visible');
+                        el.classList.add('paragraph-hidden');
+                    }
+                }
+            }, 400);
+        }
+
+
+        /* -------------------------------------------------------------
+           3. MÚSICA DE FONDO (Sintetizador Web Audio API incorporado)
+        ------------------------------------------------------------- */
+        let audioCtx = null;
+        let isPlaying = false;
+        let musicTimer = null;
+
+        const notes = [
+            261.63, 329.63, 392.00, 493.88, 523.25,
+            349.23, 440.00, 523.25, 659.25,
+            293.66, 349.23, 440.00, 587.33,
+            392.00, 493.88, 587.33, 698.46
+        ];
+
+        function playNote(freq, duration = 1.8) {
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function startAudioLoop() {
+            let index = 0;
+            musicTimer = setInterval(() => {
+                if (isPlaying) {
+                    playNote(notes[index % notes.length], 2.2);
+                    if (index % 2 === 0) {
+                        playNote(notes[(index + 2) % notes.length] * 0.5, 2.5);
+                    }
+                    index++;
+                }
+            }, 650);
+        }
+
+        function startAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (!isPlaying) {
+                isPlaying = true;
+                updateAudioUI(true);
+                startAudioLoop();
+            }
+        }
+
+        function toggleAudio() {
+            if (!audioCtx) {
+                startAudio();
+                return;
+            }
+
+            isPlaying = !isPlaying;
+            updateAudioUI(isPlaying);
+
+            if (!isPlaying && musicTimer) {
+                clearInterval(musicTimer);
+            } else if (isPlaying) {
+                startAudioLoop();
+            }
+        }
+
+        function updateAudioUI(active) {
+            const icon = document.getElementById('musicIcon');
+            const text = document.getElementById('musicText');
+            
+            if (active) {
+                icon.className = 'fas fa-volume-high text-amber-300 animate-pulse';
+                text.innerText = 'Sonando';
+            } else {
+                icon.className = 'fas fa-music text-pink-400/60';
+                text.innerText = 'Música';
+            }
+        }
+    </script>
+</body>
+</html>
